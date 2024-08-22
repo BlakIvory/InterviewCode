@@ -41,19 +41,53 @@
                     <th>Sửa</th>
                 </tr>
             </thead>
+            <?php
+            //  <!-- <tbody>
+                
+            //         while ($row = $result->fetch_assoc()) {
+            //             echo "<tr>";
+            //             echo "<td>" . $row["tenhanghoa"] . "</td>";
+            //             echo "<td>" . $row["nhacungcap"] . "</td>";
+            //             echo "<td><a href='uploads/" . $row["hinhanh"] . "' target='_blank'><img src='uploads/" . $row["hinhanh"] . "' alt='" . $row["tenhanghoa"] . "' width='100' height='100'></a></td>";
+            //             echo "<td><input type='checkbox' class='delete-checkbox' value='" . $row["id"] . "'></td>";
+            //             echo '<td><button type="button" id ="edit_' . $row['id'] . '" class="btn btn-primary">Sửa</button></td>';
+            //             echo "</tr>";
+            //         }
+                    
+            // </tbody> -->
+            ?>
+
             <tbody>
                 <?php
-                    while ($row = $result->fetch_assoc()) {
-                        echo "<tr>";
-                        echo "<td>" . $row["tenhanghoa"] . "</td>";
-                        echo "<td>" . $row["nhacungcap"] . "</td>";
-                        echo "<td><a href='uploads/" . $row["hinhanh"] . "' target='_blank'><img src='uploads/" . $row["hinhanh"] . "' alt='" . $row["tenhanghoa"] . "' width='100' height='100'></a></td>";
-                        echo "<td><input type='checkbox' class='delete-checkbox' value='" . $row["id"] . "'></td>";
-                        echo '<td><button type="button" id ="edit_' . $row['id'] . '" class="btn btn-primary">Sửa</button></td>';
-                        echo "</tr>";
-                    }
-                    ?>
+                while ($row = $result->fetch_assoc()) {
+                    // Đọc nội dung file đã mã hóa
+                    $encryptedData = file_get_contents('uploads/' . $row["hinhanh"]);
+                    $encryptedData = base64_decode($encryptedData);
+
+                    // Tách IV và dữ liệu mã hóa
+                    $ivLength = openssl_cipher_iv_length('aes-256-cbc');
+                    $iv = substr($encryptedData, 0, $ivLength);
+                    $encryptedData = substr($encryptedData, $ivLength);
+
+                    // Giải mã dữ liệu
+                    $key = '123456789'; // Khóa mã hóa
+                    $decryptedData = openssl_decrypt($encryptedData, 'aes-256-cbc', $key, 0, $iv);
+
+                    // Lưu file tạm thời để hiển thị
+                    $tempFile = 'uploads/temp_' . $row["hinhanh"];
+                    file_put_contents($tempFile, $decryptedData);
+
+                    echo "<tr>";
+                    echo "<td>" . $row["tenhanghoa"] . "</td>";
+                    echo "<td>" . $row["nhacungcap"] . "</td>";
+                    echo "<td><img src='" . $tempFile . "' alt='" . $row["tenhanghoa"] . "' width='100' height='100'></td>";
+                    echo "<td><input type='checkbox' class='delete-checkbox' value='" . $row["id"] . "'></td>";
+                    echo '<td><button type="button" id ="edit_' . $row['id'] . '" class="btn btn-primary">Sửa</button></td>';
+                    echo "</tr>";
+                }
+                ?>
             </tbody>
+
         </table>
         <?php
         } else {

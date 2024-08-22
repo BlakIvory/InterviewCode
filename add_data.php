@@ -36,14 +36,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Kiểm tra nếu $uploadOk bằng 0
+    //KHÔNG CẦN MÃ HÓA FILE
+    // if ($uploadOk == 0) {
+    //     echo "Sorry, your file was not uploaded.";
+    // } else {
+    //     if (move_uploaded_file($_FILES["hinhanh"]["tmp_name"], "uploads/".$target_file)) {
+    //         echo "The file " . htmlspecialchars($newFileName) . " has been uploaded.";
+
+    //         // Thực hiện truy vấn cập nhật dữ liệu vào cơ sở dữ liệu
+    //         $sql = "INSERT INTO hanghoa (tenhanghoa, nhacungcap, hinhanh) VALUES ('$tenhanghoa', '$nhacungcap', '$target_file')";
+
+    //         if ($conn->query($sql) === TRUE) {
+    //             echo "Thêm dữ liệu thành công!";
+    //             header("Location: dashboard.php");
+    //         } else {
+    //             echo "Lỗi: " . $conn->error;
+    //         }
+    //     } else {
+    //         echo "Sorry, there was an error uploading your file.";
+    //     }
+    // }
+
+
+
+    //ĐÃ MÃ HÓA FILE KHI XUẤT FILE ẢNH CẦN GIẢI MÃ FILE
     if ($uploadOk == 0) {
         echo "Sorry, your file was not uploaded.";
     } else {
-        if (move_uploaded_file($_FILES["hinhanh"]["tmp_name"], "uploads/".$target_file)) {
-            echo "The file " . htmlspecialchars($newFileName) . " has been uploaded.";
+        // Mã hóa file trước khi lưu trữ
+        $key = '123456789'; // Khóa mã hóa
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc')); // Vector khởi tạo
+        $encryptedData = openssl_encrypt(file_get_contents($_FILES["hinhanh"]["tmp_name"]), 'aes-256-cbc', $key, 0, $iv);
+        $encryptedData = base64_encode($iv . $encryptedData); // Kết hợp IV và dữ liệu mã hóa
+
+        if (file_put_contents($target_file, $encryptedData)) {
+            echo "The file " . htmlspecialchars($newFileName) . " has been uploaded and encrypted.";
 
             // Thực hiện truy vấn cập nhật dữ liệu vào cơ sở dữ liệu
-            $sql = "INSERT INTO hanghoa (tenhanghoa, nhacungcap, hinhanh) VALUES ('$tenhanghoa', '$nhacungcap', '$target_file')";
+            $sql = "INSERT INTO hanghoa (tenhanghoa, nhacungcap, hinhanh) VALUES ('$tenhanghoa', '$nhacungcap', '$newFileName')";
 
             if ($conn->query($sql) === TRUE) {
                 echo "Thêm dữ liệu thành công!";
@@ -55,7 +85,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             echo "Sorry, there was an error uploading your file.";
         }
     }
-
     // Đóng kết nối
     $conn->close();
 }
